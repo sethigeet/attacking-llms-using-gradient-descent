@@ -20,7 +20,7 @@ This method follows the usual method followed by hand to make and solve the simp
 1. Swap the variables and update the tableau
 1. Go back up to step 3.
 
-> ![NOTE]
+> [!NOTE]
 > This script currently only supports minimization though adding support for maximization is trivial!
 
 ### More Efficient Method using Matrices
@@ -39,10 +39,10 @@ This method follows a similar approach to the first one but instead of carrying 
 1. Swap the variables and update the tableau
 1. Go back up to step 2.
 
-> ![NOTE]
+> [!NOTE]
 > This script currently only supports maximization though adding support for maximization is trivial!
 
-> ![NOTE]
+> [!NOTE]
 > The logic for this method was largely inspired by these [notes](https://personal.math.ubc.ca/~loew/m340/rsm-notes.pdf).
 
 ## Input Format
@@ -65,11 +65,11 @@ The second part consists of all the constraints under which the function is to b
 - This is followed by `<=`. (NOTE: Currently, the scripts only support this type of constraint).
 - Finally, the constraint ends with the RHS of the constraint.
 
-> ![NOTE]
+> [!CAUTION]
 > The "space" characters in the input must be exactly as specified in the structures above. There must be no space present between the commas and the `<=` sign.
 
-> ![NOTE]
+> [!IMPORTANT]
 > Wherever specified, the coefficients of each of the variables must be specified. If you do not want the variable in the function, put a 0 there.
 
-> ![TIP]
+> [!TIP]
 > Some example files can be found in the `examples/` folder!
