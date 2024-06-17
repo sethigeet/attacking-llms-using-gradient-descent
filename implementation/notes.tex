@@ -1,0 +1,162 @@
+\documentclass[a4paper, 11pt]{article}
+\usepackage{comment} % enables the use of multi-line comments (\ifx \fi) 
+\usepackage{fullpage} % changes the margin
+\usepackage[a4paper, total={7in, 10in}]{geometry}
+\usepackage{amsmath,mathtools}
+\usepackage{amssymb,amsthm}  % assumes amsmath package installed
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{mdframed}
+\usepackage[shortlabels]{enumitem}
+\usepackage{varwidth}
+\usepackage{indentfirst}
+\usepackage{hyperref}
+\hypersetup{
+	colorlinks=true,
+	linkcolor=blue,
+	filecolor=magenta,      
+	urlcolor=blue!70!red,
+	pdftitle={Assignment 2 - Part 1},
+}
+\usepackage[most,many,breakable]{tcolorbox}
+
+\definecolor{mygreen}{RGB}{56, 140, 70}
+\definecolor{mytheorembg}{HTML}{F2F2F9}
+\definecolor{mytheoremfr}{HTML}{00007B}
+
+\tcbuselibrary{theorems,skins,hooks}
+\newtcbtheorem{problem}{Problem}
+{%
+	enhanced,
+	breakable,
+	colback = mytheorembg,
+	frame hidden,
+	boxrule = 0sp,
+	borderline west = {2pt}{0pt}{mytheoremfr},
+	sharp corners,
+	detach title,
+	before upper = \tcbtitle\par\smallskip,
+	coltitle = mytheoremfr,
+	fonttitle = \bfseries\sffamily,
+	description font = \mdseries,
+	separator sign none,
+	segmentation style={solid, mytheoremfr},
+}
+{p}
+
+\newtcbtheorem[number within=section]{definition}{Definition}{enhanced,
+	before skip=2mm,after skip=2mm, colback=red!5,colframe=red!80!black,boxrule=0.5mm,
+	attach boxed title to top left={xshift=1cm,yshift*=1mm-\tcboxedtitleheight}, varwidth boxed title*=-3cm,
+	boxed title style={frame code={
+					\path[fill=tcbcolback]
+					([yshift=-1mm,xshift=-1mm]frame.north west)
+					arc[start angle=0,end angle=180,radius=1mm]
+					([yshift=-1mm,xshift=1mm]frame.north east)
+					arc[start angle=180,end angle=0,radius=1mm];
+					\path[left color=tcbcolback!60!black,right color=tcbcolback!60!black,
+						middle color=tcbcolback!80!black]
+					([xshift=-2mm]frame.north west) -- ([xshift=2mm]frame.north east)
+					[rounded corners=1mm]-- ([xshift=1mm,yshift=-1mm]frame.north east)
+					-- (frame.south east) -- (frame.south west)
+					-- ([xshift=-1mm,yshift=-1mm]frame.north west)
+					[sharp corners]-- cycle;
+				},interior engine=empty,
+		},
+	fonttitle=\bfseries,
+  colbacktitle=red!75!black,
+	title={#2},#1}{def}
+
+\tcbuselibrary{theorems,skins,hooks}
+\newtcbtheorem[number within=section]{note}{Note}
+{%
+        enhanced
+        ,breakable
+        ,colback = mygreen!10
+        ,frame hidden
+        ,boxrule = 0sp
+        ,borderline west = {2pt}{0pt}{mygreen}
+        ,sharp corners
+        ,detach title
+        ,before upper = \tcbtitle\par\smallskip
+        ,coltitle = mygreen!85!black
+        ,fonttitle = \bfseries\sffamily
+        ,description font = \mdseries
+        ,separator sign none
+        ,segmentation style={solid, mygreen!85!black}
+}
+{th}
+
+\newcommand{\prob}[2]{\begin{problem}{#1}{}#2\end{problem}}
+\newcommand{\dfn}[2]{\begin{definition}{#1}{}#2\end{definition}}
+\newcommand{\nt}[2]{\begin{note}{#1}{}#2\end{note}}
+
+
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+
+\textsf{\noindent \large\textbf{Geet Sethi} \hfill \textbf{Notes for Implementation} \\
+    \normalsize Course: Attacking LLMs Using Projected Gradient Descent}
+
+\section{Introduction}
+
+The current LLM alignment methods are readily broken through specifically crafter adversarial prompts. Though crafting adversarial prompts using discrete optimization is highly effective, such attacks typically use more than 100,000 LLM calls. This high computational cost makes them unsuitable for things like adversarial training. To remedy this, we use Projected Gradient Descent (PGD) on the continuously relaxed prompt.
+
+\section{Objective}
+
+We will consider autoregressive LLMs $f_\theta(x) : \mathbb{T}^L \rightarrow \mathbb{R}^{L \times \lvert \mathbb{T} \rvert}$ parameterized by $\theta$ that maps the sequence of discrete tokens $x \in \mathbb{T}^L$ autoregressively to logits of the next token.
+\nt{The input sequence $x$ can also be present in its one-hot representation $X \in \{0, 1\}^{L \times \lvert \mathbb{T} \rvert}$}{}
+
+\section{The Optimization Problem}
+Attacking LLM $f_\theta(x)$ constitutes the following optimization problem:
+\begin{equation}
+  \textrm{min}_{\tilde{x} \in \mathcal{G}(x)} l(f_\theta(\tilde{x}))
+\end{equation}
+where $l$ is the attack objective and $\mathcal{G}$ is the set of all permissible perturbations.
+
+\nt{This optimization problem can also be directly dealt with using the genetic algorithm.}{}
+
+We will employ a search based attack guided by the gradient descent towards the one-hot vector representation $\nabla_{\tilde{X}} l(f_\theta(\tilde{X}))$.
+
+\section{Jail Breaking}
+
+For jail breaking a LLM, the permissible perturbations function $\mathcal{G}(x)$ allows arbitrarily choosing a substring of $x$. Specifically, $\tilde{x} = x' \lVert \hat{x} \rVert y'$ where $\lVert$ denotes concatenation, $x'$ is a fixed sequence of tokens that may consist of things like the system prompt and an (inappropriate) user request, $\hat{x}$ is the adversarial suffix (the attack objective function $l$ constructs $\hat{x}$) and $y'$ is the harmful response. Therefore, the job of the attack object $l$ is to construct a input $\hat{x}$ such that the harmful response $y'$ become more likely given $x \lVert \hat{x}$ as input. \\
+Our job is to optimize this attack object function $l$! To achieve this, we instantiate the objective using the cross entropy over the logits belonging to (part of) $y'$.
+
+\section{Continuous Relaxation}
+To attack an LLM using ordinary gradient descent, we will use \emph{Gradient-based Distributional Attack (GBDA)} that uses \textbf{\emph{Gumbel-Softmax}} to parameterize $x = \textrm{GumbelSoftmax}(\upsilon, T)$ with parameters to optimize $\upsilon \in \mathbb{R}^{L \times \lvert \mathbb{T} \rvert}$ and $T \in \mathbb{R}$.
+\nt{For $T \longrightarrow 0$, the Gumbel-Softmax approaches the categorical distribution parameterized by $\textrm{Cat}(\textrm{Softmax}(\upsilon))$. Similarly, the "samples" drawn from the Gumbel-Softmax are uniform for large $T$.}{}
+
+This type of relaxation aids in finding discrete solutions in two important ways:
+\begin{itemize}
+  \item the projection back on the simplex naturally yields sparse solutions
+  \item we can additionally control the error introduced by the relaxation via a projection on an entropy measure (namely the Gini index).
+\end{itemize}
+
+\section{The Algorithm}
+
+The Projected Gradient Descent (PGD) we will be using will have continuous relaxation of the one-hot encoding at its core. This means that the domain of optimization, instead of discrete tokens, now is the sequence of $L$ $\mathbb{T}$-dimensional simplices spanned by the $L$ one-hot token encodings.
+
+\subsection{Simplex Projection}
+The given continuous relaxation describes the probabilistic simplex. After each gradient update, we ensure that we remain on the probabilistic simplex via projection. \\
+Formally, we solve $\Pi(s)_{\textrm{simplex}} = \textrm{argmin}_{s'} \lVert s - s' \rVert^2_2$ s.t. $\sum_i s'_i = 1$ and $s'_i > 0$
+
+\subsection{Entropy Projection}
+The error introduced by continuous relaxation is counteracted via a projection of the entropy $\Pi_\textrm{entropy}$. For this, we restrict the permissible space by a projection using the \emph{Tsallis entropy} $S_q(p) = \frac{1}{q-1}(1 - \sum_i p_i^q)$.
+\nt{The \emph{Tsallis entropy} with $q=2$ is also known as the \emph{Gini Index} and geometrically describes a hypersphere.}{}
+For simplicity, we project onto the hypersphere described by the intersection of \emph{Gini Index} and the hyperplane described by the probabilistic simplex and subsequently repeat the simplex projection whenever necessary.
+
+\subsection{Flexible Sequence Length}
+To give the attack additional flexibility, we introduce another relaxation to smoothly insert (or remove) tokens. Specifically, we parameterize $m \in \left[ 0,1 \right]^L$ that yields an additional mask $M = log(mm^T) = log(m)1^T + 1log(m^T)$ with element-wise logarithm. The mask $M$ is added to the causal attention mask and used in each attention layer of the attacked LLM. For $m_i = 0$ token $i$ can be masked out and for values $m_i > 0$ we can smoothly add a token into the attention operation. After the gradient update of $m$, we clip it to the range $\left [0, 1 \right]$.
+
+\subsection{Implementation Details}
+\begin{itemize}
+  \item We use ADAM instead of vanilla gradient descent and reinitialize the attack to the best intermediate solution $x_\textrm{best}$ if a configurable amount of attack iterations did not yield a better solution.
+  \item We linearly ramp up the initial entropy projection.
+  \item We use cosine annealing with warm restarts for the learning rate and entropy projection.
+  \item The entropy projection is also linearly scaled by $m$ for the flexible control length, s.t. removed tokens are affected by the entropy projection.
+\end{itemize}
+
+\end{document}
